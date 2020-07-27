@@ -32,7 +32,7 @@ export default async function createAppData(req) {
       text: cat.name,
       as: `/s/${cat.id}`,
       href: '/s/[...categorySlug]',
-      subcategories: cat.categories
+      items: cat.categories
         ? cat.categories.map(cat => {
             return {
               text: cat.name,

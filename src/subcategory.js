@@ -6,27 +6,26 @@ import normalizeProduct from './utils/normalizeProduct'
 // TODO: make process env var
 const limit = 25
 
-export default async function subcategory(params, req, res) {
+export default async function subcategory(params, req) {
   return await fulfillAPIRequest(req, {
     appData: createAppData,
-    pageData: () => getPageData(params, req, res),
+    pageData: () => getPageData(params, req),
   })
 }
 
-async function getPageData(params, req, res) {
-  let { q = '', slug = '1', page = 1, filters = '[]', sort, more = false } = params
+async function getPageData(params, req) {
+  const { page = 1, filters = '[]', sort } = params
+  const { categorySlug } = req.query
 
-  const subcategoryId = req.query.subcategoryId
   const offset = limit * (page - 1)
 
-  const client = await getClient(req, res)
-
-  const data = await client.getCategory(subcategoryId)
+  const client = await getClient(req)
+  const data = await client.getCategory(categorySlug)
   const search = await client.findProducts({
     sort,
     offset,
     limit,
-    refine: [`cgid=${subcategoryId}`, ...JSON.parse(filters)],
+    refine: [`cgid=${categorySlug}`, ...JSON.parse(filters)],
   })
   // TODO: Can use the getProducts API call to get allImages
 
@@ -51,7 +50,7 @@ async function getPageData(params, req, res) {
       }
     }),
     filters: JSON.parse(filters),
-    facets: search.refinements
+    facets: (search.refinements || [])
       .filter(e => e.values)
       .map(({ label, attributeId, values }) => {
         return {

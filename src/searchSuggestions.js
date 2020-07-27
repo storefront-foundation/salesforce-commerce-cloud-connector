@@ -1,66 +1,35 @@
-/**
- * An example implementation of the API for the SearchPopup component using placeholder data.
- * @param {Object} params
- * @param {String} params.q The search text
- * @return {Object} An object whose shape matches AppModelBase
- */
+import get from 'lodash/get'
+import getClient from './utils/client'
+import normalizeProduct from './utils/normalizeProduct'
+
 export default async function searchSuggestions(q, req, res) {
+  const client = await getClient(req)
+
+  const results = await client.getSuggestions({ q })
+
+  const categories = get(results, ['categorySuggestions', 'categories'], [])
+  const productSuggestions = get(results, ['productSuggestions', 'products'], [])
+
+  const products = await client.getProducts({
+    ids: productSuggestions.map(s => s.productId).join(','),
+  })
+
   return {
-    text: q,
+    text: results.searchPhrase,
     groups: [
-      {
-        caption: 'Suggested Searches',
-        ui: 'list',
-        links: [`Small ${q}`, `Large ${q}`, `${q} with red stripes`].map(text => ({
-          text,
-          as: `/search?q=${encodeURIComponent(text)}`,
-          href: '/search',
-        })),
-      },
       {
         caption: 'Suggested Categories',
         ui: 'list',
-        links: [
-          { text: 'Category 1', href: '/s/[subcategoryId]', as: '/s/1' },
-          { text: 'Category 2', href: '/s/[subcategoryId]', as: '/s/2' },
-          { text: 'Category 3', href: '/s/[subcategoryId]', as: '/s/3' },
-        ],
+        links: categories.map(({ id, name }) => {
+          return { text: name, href: '/s/[subcategoryId]', as: `/s/${id}` }
+        }),
       },
       {
         caption: 'Suggested Products',
         ui: 'thumbnails',
-        links: [
-          {
-            text: 'Product 1',
-            href: '/p/[productId]',
-            as: '/p/1?s=1&c=1',
-            thumbnail: { src: 'https://via.placeholder.com/120x120', alt: 'Product 1' },
-          },
-          {
-            text: 'Product 2',
-            href: '/p/[productId]',
-            as: '/p/2?s=1&c=1',
-            thumbnail: { src: 'https://via.placeholder.com/120x120', alt: 'Product 1' },
-          },
-          {
-            text: 'Product 3',
-            href: '/p/[productId]',
-            as: '/p/3?s=1&c=1',
-            thumbnail: { src: 'https://via.placeholder.com/120x120', alt: 'Product 1' },
-          },
-          {
-            text: 'Product 4',
-            href: '/p/[productId]',
-            as: '/p/3?s=1&c=1',
-            thumbnail: { src: 'https://via.placeholder.com/120x120', alt: 'Product 1' },
-          },
-          {
-            text: 'Product 5',
-            href: '/p/[productId]',
-            as: '/p/5?s=1&c=1',
-            thumbnail: { src: 'https://via.placeholder.com/120x120', alt: 'Product 1' },
-          },
-        ],
+        links: (products.data || []).map(normalizeProduct).map(({ name, url, thumbnail }) => {
+          return { text: name, href: '/p/[productId]', as: url, thumbnail }
+        }),
       },
     ],
   }

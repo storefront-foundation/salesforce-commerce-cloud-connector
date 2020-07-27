@@ -18,6 +18,21 @@ function createUrl(prePath, postPath, query) {
   )}`
 }
 
+function decodeUser(req) {
+  try {
+    const buff = new Buffer(req.cookies[COOKIES.USER], 'base64')
+    const text = buff.toString('ascii')
+    return JSON.parse(text)
+  } catch {
+    return {}
+  }
+}
+
+export function encodeUser(user) {
+  const buff = new Buffer(JSON.stringify(user))
+  return buff.toString('base64')
+}
+
 async function login() {
   const url = createUrl('customer/shopper-customers', 'customers/actions/login', {
     clientId,
@@ -32,7 +47,6 @@ async function login() {
     },
   })
   const token = res.headers.get('authorization')
-  console.log('Received new token', token)
   const data = await res.json()
   return {
     token,
@@ -40,60 +54,48 @@ async function login() {
   }
 }
 
-// res.setHeader('Set-Cookie', `${COOKIES.TOKEN}=${token}; Path=/`)
-// res.setHeader('Set-Cookie', [
-//   `${COOKIES.TOKEN}=${token}; Path=/`,
-//   `${COOKIES.CUSTOMER_ID}=${customerId}; Path=/`,
-// ])
+export default function getClient(req) {
+  let user = decodeUser(req)
 
-export default async function getClient(req) {
-  async function refreshToken() {
-    const { token } = await login()
-    return token
+  async function refreshAuth() {
+    user = await login()
   }
 
   async function fetchWithToken(url, options) {
-    let token = req.cookies[COOKIES.TOKEN]
-    if (!token) {
-      console.log('\n\nno token')
-      token = await refreshToken()
-    } else {
-      console.log('\n\n got token from cookie')
+    if (!user.token) {
+      await refreshAuth()
     }
 
     const opt = {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: token,
+        Authorization: user.token,
       },
     }
 
+    console.log('Fetching', url)
+
     let res = await fetch(url, opt)
+
+    console.log('client status', res.statusText)
 
     if (res.statusText === 'Unauthorized') {
       // Token expired
-      console.log('\n\ntoken expired', await res.text())
-      token = await refreshToken()
-      // Retry
-      // TODO: Maybe just use `api` again...
-      res = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-      })
-      return await res.json()
+      console.log('Token expired')
+      await refreshAuth()
+      return fetchWithToken(url, options)
     } else {
-      const data = await res.json()
-      return data
+      if (res.statusText === 'OK') {
+        return await res.json()
+      } else {
+        throw new Error(await res.text())
+      }
     }
   }
 
   function api(prePath, postPath, query) {
     const url = createUrl(prePath, postPath, query)
-    console.log('Fetching', url)
     return fetchWithToken(url)
   }
 
@@ -122,39 +124,80 @@ export default async function getClient(req) {
     return api('search/shopper-search', 'search-suggestions', query)
   }
 
-  function getCart(cartId) {
-    return api('checkout/shopper-baskets', `baskets/${cartId}`)
+  function getCart() {
+    return api('checkout/shopper-baskets', `baskets/${user.cartId}`)
+  }
+
+  async function getCustomer() {
+    console.log('User from cookie', user)
+
+    // TODO: I do not think I need this custom fetch now... Just add the error statuses to the main call
+
+    if (!user.token || !user.customerId) {
+      console.log('No token or cust id')
+      await refreshAuth()
+      return user
+    }
+
+    // Fetch customer data
+    const url = createUrl('customer/shopper-customers', `customers/${user.customerId}`)
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: user.token,
+      },
+    })
+
+    console.log('status', res.statusText)
+
+    if (
+      res.statusText === 'Unauthorized' ||
+      res.statusText === 'Bad Request' ||
+      res.statusText === 'Not Found'
+    ) {
+      // Token expired or invalid customer
+      console.log('Error', await res.text())
+      await refreshAuth()
+      return user
+    } else {
+      return await res.json()
+    }
+  }
+
+  function getCarts() {
+    return api('customer/shopper-customers', `customers/${user.customerId}/baskets`)
   }
 
   function createCart() {
-    const customerId = req.cookies[COOKIES.CUSTOMER_ID]
     const url = createUrl('checkout/shopper-baskets', 'baskets')
     console.log('Posting to', url)
     return fetchWithToken(url, {
       method: 'post',
       body: JSON.stringify({
         customerInfo: {
-          customerId,
+          customerId: user.customerId,
           email: 'test@test.com',
         },
       }),
     })
   }
 
-  function addToCart(cartId, body) {
-    const url = createUrl('checkout/shopper-baskets', `baskets/${cartId}/items`)
-    console.log('Posting', body, 'to', url)
+  function addToCart({ productId, quantity }) {
+    // TODO: Maybe we should create the cart here??
+    const url = createUrl('checkout/shopper-baskets', `baskets/${user.cartId}/items`)
     return fetchWithToken(url, {
       method: 'post',
-      body: JSON.stringify(body),
+      body: JSON.stringify([{ productId, quantity }]),
     })
   }
 
   return {
-    getProduct,
-    getProducts,
     getCategory,
     getCart,
+    getCarts,
+    getCustomer,
+    getProduct,
+    getProducts,
     getSuggestions,
     getMenu,
     findProducts,
