@@ -124,48 +124,20 @@ export default function getClient(req) {
     return api('search/shopper-search', 'search-suggestions', query)
   }
 
-  function getCart() {
-    return api('checkout/shopper-baskets', `baskets/${user.cartId}`)
-  }
-
-  async function getCustomer() {
-    console.log('User from cookie', user)
-
-    // TODO: I do not think I need this custom fetch now... Just add the error statuses to the main call
-
-    if (!user.token || !user.customerId) {
+  async function session() {
+    if (!user.token) {
       console.log('No token or cust id')
       await refreshAuth()
-      return user
-    }
-
-    // Fetch customer data
-    const url = createUrl('customer/shopper-customers', `customers/${user.customerId}`)
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: user.token,
-      },
-    })
-
-    console.log('status', res.statusText)
-
-    if (
-      res.statusText === 'Unauthorized' ||
-      res.statusText === 'Bad Request' ||
-      res.statusText === 'Not Found'
-    ) {
-      // Token expired or invalid customer
-      console.log('Error', await res.text())
-      await refreshAuth()
-      return user
-    } else {
-      return await res.json()
     }
   }
 
-  function getCarts() {
-    return api('customer/shopper-customers', `customers/${user.customerId}/baskets`)
+  async function getCart() {
+    const carts = await api('customer/shopper-customers', `customers/${user.customerId}/baskets`)
+    if (carts.total === 0) {
+      return await createCart()
+    } else {
+      return carts.baskets[0]
+    }
   }
 
   function createCart() {
@@ -182,9 +154,9 @@ export default function getClient(req) {
     })
   }
 
-  function addToCart({ productId, quantity }) {
-    // TODO: Maybe we should create the cart here??
-    const url = createUrl('checkout/shopper-baskets', `baskets/${user.cartId}/items`)
+  async function addToCart({ productId, quantity }) {
+    const cart = await getCart()
+    const url = createUrl('checkout/shopper-baskets', `baskets/${cart.basketId}/items`)
     return fetchWithToken(url, {
       method: 'post',
       body: JSON.stringify([{ productId, quantity }]),
@@ -194,8 +166,7 @@ export default function getClient(req) {
   return {
     getCategory,
     getCart,
-    getCarts,
-    getCustomer,
+    session,
     getProduct,
     getProducts,
     getSuggestions,
@@ -203,5 +174,8 @@ export default function getClient(req) {
     findProducts,
     createCart,
     addToCart,
+    get user() {
+      return user
+    },
   }
 }

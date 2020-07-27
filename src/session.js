@@ -1,26 +1,27 @@
 import getClient, { encodeUser } from './utils/client'
 import { COOKIES } from './utils/constants'
+import normalizeProduct from './utils/normalizeProduct'
 
 export default async function session(req, res) {
   const client = await getClient(req)
-  const customer = await client.getCustomer()
 
-  const carts = await client.getCarts()
+  await client.session()
 
-  console.log('received carts', carts)
+  const { productItems, productTotal } = await client.getCart()
 
-  let cart
-  if (carts.total === 0) {
-    cart = await client.createCart()
+  const products = await client.getProducts({
+    ids: productItems.map(item => item.productId).join(','),
+  })
+  const items = (products.data || []).map((item, index) => {
+    return normalizeProduct({ ...productItems[index], ...item })
+  })
+
+  res.setHeader('Set-Cookie', `${COOKIES.USER}=${encodeUser(client.user)}; Path=/`)
+
+  return {
+    cart: {
+      items,
+      total: productTotal,
+    },
   }
-
-  customer.cartId = cart.basketId
-
-  if (customer.token) {
-    // Has token data, must be refresh, save it
-    console.log('setting user cookie')
-    res.setHeader('Set-Cookie', `${COOKIES.USER}=${encodeUser(customer)}; Path=/`)
-  }
-
-  return customer
 }

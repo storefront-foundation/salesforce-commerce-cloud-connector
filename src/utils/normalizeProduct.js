@@ -86,6 +86,7 @@ export default function normalizeProduct(data, color, size) {
     colors,
     sizes,
     specs,
+    quantity: data.quantity || 1,
     // TODO: Remove later
     raw: data,
   }
