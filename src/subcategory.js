@@ -4,7 +4,7 @@ import createAppData from './utils/createAppData'
 import normalizeProduct from './utils/normalizeProduct'
 
 // TODO: make process env var
-const limit = 25
+const limit = 24
 
 export default async function subcategory(params, req) {
   return await fulfillAPIRequest(req, {
@@ -27,7 +27,11 @@ async function getPageData(params, req) {
     limit,
     refine: [`cgid=${categorySlug}`, ...JSON.parse(filters)],
   })
-  // TODO: Can use the getProducts API call to get allImages
+
+  const products = await client.getProducts({
+    ids: search.hits.map(p => p.productId).join(','),
+    allImages: true,
+  })
 
   const totalPages = Math.ceil(search.total / limit) + 1
 
@@ -41,7 +45,7 @@ async function getPageData(params, req) {
     totalPages,
     // isLanding,
     // cmsBlocks,
-    products: (search.hits || []).map(normalizeProduct),
+    products: (products.data || []).map(normalizeProduct),
     sort,
     sortOptions: search.sortingOptions.map(({ label, id }) => {
       return {
@@ -56,11 +60,12 @@ async function getPageData(params, req) {
         return {
           name: label,
           options: values.map(({ hitCount, label, value }) => {
-            return {
+            const facet = {
               name: label,
               code: `${attributeId}=${value}`,
               matches: hitCount,
             }
+            return facet
           }),
         }
       }),

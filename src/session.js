@@ -1,7 +1,6 @@
 import getClient, { encodeUser } from './utils/client'
 import { COOKIES } from './utils/constants'
 import normalizeProduct from './utils/normalizeProduct'
-import { product } from '.'
 
 export default async function session(req, res) {
   const client = await getClient(req)

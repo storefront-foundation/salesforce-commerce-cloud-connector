@@ -132,11 +132,16 @@ export default function getClient(req) {
   }
 
   async function getCart() {
-    const carts = await api('customer/shopper-customers', `customers/${user.customerId}/baskets`)
-    if (carts.total === 0) {
+    try {
+      const carts = await api('customer/shopper-customers', `customers/${user.customerId}/baskets`)
+      if (carts.total === 0) {
+        return await createCart()
+      } else {
+        return carts.baskets[0]
+      }
+    } catch {
+      // If something goes wrong, just make a new one
       return await createCart()
-    } else {
-      return carts.baskets[0]
     }
   }
 

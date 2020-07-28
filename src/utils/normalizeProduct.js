@@ -42,9 +42,11 @@ export default function normalizeProduct(data, color, size) {
   const sizes = getVariations('size')
 
   colors.forEach(c => {
+    const thumbnails = getImages('medium', 'color', c.id)
     c.media = {
       full: getImages('large', 'color', c.id),
-      thumbnails: getImages('medium', 'color', c.id),
+      thumbnails,
+      thumbnail: thumbnails.length ? thumbnails[0] : undefined,
     }
   })
 
