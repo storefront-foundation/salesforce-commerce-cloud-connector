@@ -1,11 +1,11 @@
 import fulfillAPIRequest from 'react-storefront/props/fulfillAPIRequest'
 import createAppData from './utils/createAppData'
 import getClient from './utils/client'
-import normalizeProduct from './utils/normalizeProduct'
+import getCart from './utils/getCart'
 
 export default async function cart(req, res) {
   const client = await getClient(req)
-  const cart = await client.getCart()
+  const cart = await getCart(client)
 
   return fulfillAPIRequest(req, {
     appData: createAppData,
@@ -18,10 +18,7 @@ export default async function cart(req, res) {
             href: '/',
           },
         ],
-        cart: {
-          items: (cart.productItems || []).map(normalizeProduct),
-          total: cart.productTotal,
-        },
+        cart,
       }),
   })
 }

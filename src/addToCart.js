@@ -1,5 +1,6 @@
 import isEqual from 'lodash/isEqual'
 import getClient from './utils/client'
+import getCart from './utils/getCart'
 
 export default async function addToCart({ product, quantity, color, size }, req, res) {
   // Fetch and find product with given {color, size} variation values
@@ -20,8 +21,8 @@ export default async function addToCart({ product, quantity, color, size }, req,
   }
 
   try {
-    const result = await client.addToCart({ productId: variant.productId, quantity })
-    return result
+    await client.addToCart({ productId: variant.productId, quantity })
+    return { cart: await getCart(client) }
   } catch (e) {
     res.status(500)
     return { e }
