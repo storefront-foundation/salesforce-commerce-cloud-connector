@@ -168,6 +168,23 @@ export default function getClient(req) {
     })
   }
 
+  async function removeFromCart(itemId) {
+    const cart = await getCart()
+    const url = createUrl('checkout/shopper-baskets', `baskets/${cart.basketId}/items/${itemId}`)
+    return fetchWithToken(url, {
+      method: 'delete',
+    })
+  }
+
+  async function updateCart(itemId, quantity) {
+    const cart = await getCart()
+    const url = createUrl('checkout/shopper-baskets', `baskets/${cart.basketId}/items/${itemId}`)
+    return fetchWithToken(url, {
+      method: 'patch',
+      body: JSON.stringify({ quantity }),
+    })
+  }
+
   return {
     getCategory,
     getCart,
@@ -179,6 +196,8 @@ export default function getClient(req) {
     findProducts,
     createCart,
     addToCart,
+    removeFromCart,
+    updateCart,
     get user() {
       return user
     },

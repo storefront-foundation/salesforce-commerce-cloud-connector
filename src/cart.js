@@ -19,7 +19,7 @@ export default async function cart(req, res) {
           },
         ],
         cart: {
-          items: cart.productItems.map(normalizeProduct),
+          items: (cart.productItems || []).map(normalizeProduct),
           total: cart.productTotal,
         },
       }),
