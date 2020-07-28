@@ -6,13 +6,12 @@ export default async function home(req, res) {
     appData: createAppData,
     pageData: () =>
       Promise.resolve({
-        title: 'React Storefront',
+        title: 'React Storefront | Salesforce Commerce Cloud Connector',
         slots: {
-          heading: 'Welcome to your new React Storefront app.',
+          heading: 'Welcome',
           description: `
                 <p>
-                Here you'll find mock home, category, subcategory, product, and cart pages that you can
-                use as a starting point to build your PWA.
+                Enjoy our Salesforce Commerce Cloud Connector.
               </p>
               <p>Happy coding!</p>
             `,
