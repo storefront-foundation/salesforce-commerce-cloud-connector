@@ -3,6 +3,14 @@ import getClient from './utils/client'
 import normalizeProduct from './utils/normalizeProduct'
 
 export default async function searchSuggestions(q, req, res) {
+  // Query has a length constraint (3...50)
+  if (q.length < 3) {
+    return {
+      text: q,
+      groups: [],
+    }
+  }
+
   const client = await getClient(req)
 
   const results = await client.getSuggestions({ q })
