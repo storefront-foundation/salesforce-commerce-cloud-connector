@@ -11,5 +11,5 @@ export default async function session(req, res) {
 
   res.setHeader('Set-Cookie', `${COOKIES.USER}=${encodeUser(client.user)}; Path=/`)
 
-  return { cart }
+  return { cart, signedIn: client.user.authType === 'registered' }
 }

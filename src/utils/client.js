@@ -185,6 +185,53 @@ export default function getClient(req) {
     })
   }
 
+  function signUp({ email, firstName, lastName, password, login }) {
+    const url = createUrl('customer/shopper-customers', 'customers')
+    return fetchWithToken(url, {
+      method: 'post',
+      body: JSON.stringify({
+        customer: {
+          email,
+          firstName,
+          lastName,
+          login,
+        },
+        password,
+      }),
+    })
+  }
+
+  async function signIn(email, password) {
+    const url = createUrl('customer/shopper-customers', 'customers/actions/login', { clientId })
+    const buff = new Buffer(`${email}:${password}`)
+    const opt = {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${buff.toString('base64')}`,
+      },
+      body: JSON.stringify({
+        type: 'credentials',
+      }),
+    }
+    const res = await fetch(url, opt)
+    if (res.statusText === 'Unauthorized') {
+      throw new Error(await res.text())
+    }
+    const token = res.headers.get('authorization')
+    const data = await res.json()
+    user = {
+      token,
+      authType: data.authType,
+      customerId: data.customerId,
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      login: data.login,
+    }
+    return user
+  }
+
   return {
     getCategory,
     getCart,
@@ -198,6 +245,8 @@ export default function getClient(req) {
     addToCart,
     removeFromCart,
     updateCart,
+    signUp,
+    signIn,
     get user() {
       return user
     },

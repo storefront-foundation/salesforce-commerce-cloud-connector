@@ -10,6 +10,8 @@ export default async function getCart(client) {
       ids: productItems.map(item => item.productId).join(','),
     })
     items = (products.data || []).map((item, index) => {
+      // Order matters here. `item` will add needed properties
+      // and set the correct variant thumbnail
       return normalizeProduct({ ...productItems[index], ...item })
     })
   }
