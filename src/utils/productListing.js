@@ -17,10 +17,14 @@ export default async function productListing(params, req, searchOptions) {
     ...searchOptions,
   })
 
-  const products = await client.getProducts({
-    ids: search.hits.map(p => p.productId).join(','),
-    allImages: true,
-  })
+  let products = []
+
+  if (search.hits) {
+    products = await client.getProducts({
+      ids: search.hits.map(p => p.productId).join(','),
+      allImages: true,
+    })
+  }
 
   const totalPages = Math.ceil(search.total / limit) + 1
 
