@@ -20,7 +20,7 @@ Next `cd` into your created application and install the Salesforce Commerce Clou
 
 ```
 cd my-sfcc-app
-npm install salesforce-commerce-cloud-connector
+npm install react-storefront-salesforce-commerce-cloud-connector
 ```
 
 Next configure the `SITE_ID`, `SHORT_CODE`, `ORGANIZATION_ID`, and `CLIENT_ID` environment variables in `.env` file to point to your Salesforce Commerce Cloud site and API client. See `.env.sample` file as an example of adding env variable via [dotenv](https://www.npmjs.com/package/dotenv). You can also check [this guide](https://www.twilio.com/blog/working-with-environment-variables-in-node-js-html) to get more info about Node.js Environment Variables. For example, your `.env` file may look like:
@@ -46,14 +46,14 @@ module.exports = withReactStorefront({
   // ... More code
 ```
 
-Change this line to use the `salesforce-commerce-cloud-connector` as shown below:
+Change this line to use the `react-storefront-salesforce-commerce-cloud-connector` as shown below:
 
 ```
 module.exports = withReactStorefront({
 
   // ... Some code
 
-  connector: 'salesforce-commerce-cloud-connector',
+  connector: 'react-storefront-salesforce-commerce-cloud-connector',
 
   // ... More code
 ```
