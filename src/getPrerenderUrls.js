@@ -1,7 +1,8 @@
 import getClient from './utils/client'
 
-export default async function getPrerenderUrls(req) {
-  const client = await getClient(req)
+// Fetches the page and API paths for all categories and a few product from each specified by the given options
+export default async function getPrerenderUrls(options = { offset: 0, limit: 10 }) {
+  const client = await getClient()
 
   const { categories = [] } = await client.getMenu()
 
@@ -14,8 +15,7 @@ export default async function getPrerenderUrls(req) {
 
     // Try prerendering the first 10 products of each category
     const search = await client.findProducts({
-      offset: 0,
-      limit: 10,
+      ...options,
       refine: [`cgid=${category.id}`],
     })
 
