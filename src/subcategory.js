@@ -1,4 +1,4 @@
-import fulfillAPIRequest from 'react-storefront/props/fulfillAPIRequest'
+import fulfillAPIRequest from './utils/fulfillAPIRequest'
 import getClient from './utils/client'
 import createAppData from './utils/createAppData'
 import productListing from './utils/productListing'

@@ -2,7 +2,7 @@ import getClient from './utils/client'
 import normalizeProduct from './utils/normalizeProduct'
 import createAppData from './utils/createAppData'
 
-import fulfillAPIRequest from 'react-storefront/props/fulfillAPIRequest'
+import fulfillAPIRequest from './utils/fulfillAPIRequest'
 // import getBase64ForImage from 'react-storefront/utils/getBase64ForImage'
 
 export default async function product({ id }, req) {
